@@ -1,9 +1,15 @@
 package org.ahedstrom.bloggerapi.v3;
 
+import java.io.UnsupportedEncodingException;
+
 import org.apache.http.Header;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHeader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.content.Context;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -24,7 +30,7 @@ abstract class Api {
 		this.oauth = oauth;
 	}
 
-	protected void invoke(final String path, final Callback callback) {
+	protected void invokeGet(final String path, final Callback callback) {
 		String url = buildUrl(path);
 		client.get(url, new ResponseHander(callback){
 			@Override
@@ -45,6 +51,37 @@ abstract class Api {
 			}
 		});
 	}
+	
+	protected void invokePost(Context ctx, final String path, Posts entry, final Callback callback) {
+		try {
+			String url = buildUrl(path);
+			client.post(ctx,
+					url,
+					new Header[]{new BasicHeader("Authorization", "Bearer " + oauth.getAccessToken())},
+					new StringEntity(entry.toString(), "utf-8"),
+					"application/json",
+					new ResponseHander(callback){
+						@Override
+						public void onSuccess(JSONObject blogs) {
+							callback.onSuccess(blogs);
+						}
+						@Override
+						public void onFailure(Throwable arg0, JSONObject error) {
+							try {
+								if (401 == error.getJSONObject("error").getInt("code")) {
+									renewOAuthToken(path, callback);
+								} else {
+									callback.onFailure();
+								}
+							} catch (JSONException e) {
+								callback.onFailure();
+							}
+						}
+					});
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	private void renewOAuthToken(final String path, final Callback callback) {
 		RequestParams params = new RequestParams();
@@ -58,7 +95,7 @@ abstract class Api {
 				try {
 					String renewedAccessToken = json.getString("access_token");
 					oauth.onAccessTokenExpired(renewedAccessToken);
-					invoke(path, callback);
+					invokeGet(path, callback);
 				} catch (JSONException e) {
 					callback.onFailure();
 				}

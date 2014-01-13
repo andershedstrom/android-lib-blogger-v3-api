@@ -12,7 +12,7 @@ abstract class Base {
 	Base(JSONObject json) {
 		this.json = json;
 	}
-	
+
 	public JSONObject getJsonObject() {
 		return json;
 	}
@@ -65,5 +65,10 @@ abstract class Base {
 			t.parse3339(value);
 		}
 		return t;
+	}
+	
+	@Override
+	public String toString() {
+		return json.toString();
 	}
 }

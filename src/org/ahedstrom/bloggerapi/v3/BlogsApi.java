@@ -19,7 +19,7 @@ public class BlogsApi extends Api {
 
 	public void list(final ApiCallback<List<Blogs>> callback) {
 		Log.d(TAG, "invoking");
-		invoke("/users/self/blogs", new Callback() {
+		invokeGet("/users/self/blogs", new Callback() {
 			@Override
 			public void onSuccess(JSONObject jsonObject) {
 				List<Blogs> lst = new ArrayList<Blogs>();
