@@ -1,7 +1,9 @@
-package org.ahedstrom.bloggerapi.v3;
+package org.ahedstrom.google;
 
 import java.io.UnsupportedEncodingException;
 
+import org.ahedstrom.google.auth.OAuth;
+import org.ahedstrom.google.bloggerapi.v3.Posts;
 import org.apache.http.Header;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
@@ -10,32 +12,37 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
-abstract class Api {
-	interface Callback {
+public abstract class Api {
+	private static final String TAG = "Api";
+	
+	public interface Callback {
 		void onSuccess(JSONObject jsonObject);
 		void onFailure();
 	}
 	
-	private final static String baseUrl = "https://www.googleapis.com/blogger/v3"; 
+	private final String baseUrl; 
 	private final static AsyncHttpClient client = new AsyncHttpClient();
 	
 	private final OAuth oauth;
 	
-	Api(OAuth oauth) {
+	protected Api(String baseUrl, OAuth oauth) {
+		this.baseUrl = baseUrl;
 		this.oauth = oauth;
 	}
 
 	protected void invokeGet(final String path, final Callback callback) {
 		String url = buildUrl(path);
+		Log.d(TAG, "url: " + url);
 		client.get(url, new ResponseHander(callback){
 			@Override
-			public void onSuccess(JSONObject blogs) {
-				callback.onSuccess(blogs);
+			public void onSuccess(JSONObject json) {
+				callback.onSuccess(json);
 			}
 			@Override
 			public void onFailure(Throwable arg0, JSONObject error) {

@@ -1,5 +1,6 @@
-package org.ahedstrom.bloggerapi.v3;
+package org.ahedstrom.google.bloggerapi.v3;
 
+import org.ahedstrom.google.Base;
 import org.json.JSONException;
 import org.json.JSONObject;
 

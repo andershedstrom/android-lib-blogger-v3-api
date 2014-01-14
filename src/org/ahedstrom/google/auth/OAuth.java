@@ -1,4 +1,4 @@
-package org.ahedstrom.bloggerapi.v3;
+package org.ahedstrom.google.auth;
 
 public interface OAuth {
 	String getAccessToken();

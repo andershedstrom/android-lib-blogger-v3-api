@@ -1,8 +1,10 @@
-package org.ahedstrom.bloggerapi.v3;
+package org.ahedstrom.google.bloggerapi.v3;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ahedstrom.google.ApiCallback;
+import org.ahedstrom.google.auth.OAuth;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,7 +12,7 @@ import org.json.JSONObject;
 import android.util.Log;
 
 
-public class BlogsApi extends Api {
+public class BlogsApi extends BloggerApi {
 	private static final String TAG = "BlogsApi";
 
 	public BlogsApi(OAuth oauth) {

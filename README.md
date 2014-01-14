@@ -1,4 +1,4 @@
-android-lib-blogger-v3-api
+android-lib-google-apia
 ==========================
 
-Simple Android Library project that tries to implement Blogger API v3
+Simple Android Library project that tries to implement some of Googles API's

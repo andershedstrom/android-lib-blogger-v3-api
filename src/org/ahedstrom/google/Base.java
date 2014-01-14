@@ -1,15 +1,16 @@
-package org.ahedstrom.bloggerapi.v3;
+package org.ahedstrom.google;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.text.format.Time;
 
-abstract class Base {
+public abstract class Base {
 
 	protected final JSONObject json;
 
-	Base(JSONObject json) {
+	protected Base(JSONObject json) {
 		this.json = json;
 	}
 
@@ -44,6 +45,14 @@ abstract class Base {
 	protected JSONObject getJsonObject(String name) {
 		try {
 			return json.getJSONObject(name);
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	protected JSONArray getJsonArray(String name) {
+		try {
+			return json.getJSONArray(name);
 		} catch (JSONException e) {
 			throw new RuntimeException(e);
 		}

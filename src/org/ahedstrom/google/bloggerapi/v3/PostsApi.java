@@ -1,10 +1,12 @@
-package org.ahedstrom.bloggerapi.v3;
+package org.ahedstrom.google.bloggerapi.v3;
 
+import org.ahedstrom.google.ApiCallback;
+import org.ahedstrom.google.auth.OAuth;
 import org.json.JSONObject;
 
 import android.content.Context;
 
-public class PostsApi extends Api {
+public class PostsApi extends BloggerApi {
 
 	private static final String pathTemplate = "/blogs/%s/posts";
 	private final Context ctx;
