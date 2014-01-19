@@ -1,6 +1,9 @@
 package org.ahedstrom.google.bloggerapi.v3;
 
+import java.util.List;
+
 import org.ahedstrom.google.Base;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -67,6 +70,19 @@ public class Posts extends Base {
 		public Builder setContent(String content) {
 			try {
 				json.put("content", content);
+				return this;
+			} catch (JSONException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		public Builder setLabels(List<String> labels) {
+			try {
+				JSONArray arr = new JSONArray();
+				for (String label : labels) {
+					arr.put(label);
+				}
+				json.put("labels", arr);
 				return this;
 			} catch (JSONException e) {
 				throw new RuntimeException(e);

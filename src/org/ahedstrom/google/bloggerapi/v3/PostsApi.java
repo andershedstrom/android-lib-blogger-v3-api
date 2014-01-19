@@ -8,7 +8,7 @@ import android.content.Context;
 
 public class PostsApi extends BloggerApi {
 
-	private static final String pathTemplate = "/blogs/%s/posts";
+	private static final String pathTemplate = "/blogs/%s/posts?isDraft=%s";
 	private final Context ctx;
 	
 	public PostsApi(Context ctx, OAuth oauth) {
@@ -17,8 +17,12 @@ public class PostsApi extends BloggerApi {
 	}
 	
 	public void insert(Posts entry, final ApiCallback<Posts> callback) {
+		insert(entry, false, callback);
+	}
+	
+	public void insert(Posts entry, boolean isDraft, final ApiCallback<Posts> callback) {
 		invokePost(ctx, 
-			String.format(pathTemplate, entry.getBlogId()),
+			String.format(pathTemplate, entry.getBlogId(), isDraft),
 			entry,
 			new Callback() {
 				@Override
