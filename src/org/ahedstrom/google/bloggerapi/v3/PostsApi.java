@@ -19,7 +19,7 @@ public class PostsApi extends BloggerApi {
 	public void insert(Posts entry, boolean isDraft, final ApiCallback<Posts> callback) {
 		invokePost(String.format(pathTemplate, entry.getBlogId(), isDraft),
 			entry,
-			new Callback() {
+			new Callback<JSONObject>() {
 				@Override
 				public void onSuccess(JSONObject response) {
 					callback.onSuccess(new Posts(response));

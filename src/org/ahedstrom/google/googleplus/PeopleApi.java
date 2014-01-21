@@ -16,7 +16,7 @@ public class PeopleApi extends GooglePlusApi {
 	
 	public void get(final ApiCallback<People> callback) {
 		Log.d(TAG, "invoking");
-		invokeGet("/people/me", new Callback() {
+		invokeGet("/people/me", new Callback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject jsonObject) {
 				Log.d(TAG, jsonObject.toString());

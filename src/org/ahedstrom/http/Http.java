@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -18,38 +19,52 @@ public class Http {
 
 	private static final String TAG = "Http";
 
-	public static String post(String url, Map<String, String> headers, String body) throws MalformedURLException, IOException {
-		Log.d(TAG, "post -> " + url);
+	public static Response get(String url)throws MalformedURLException, IOException {
+		return execute("GET", url, Collections.<String, String>emptyMap(), null);
+	}
+
+	public static Response post(String url, Map<String, String> headers, String body) throws MalformedURLException, IOException {
+		return execute("POST", url, headers, body);
+	}
+	
+	private static Response execute(String metod, String url, Map<String, String> headers, String body) throws MalformedURLException, IOException {
+		Response resp = new Response();
+		Log.d(TAG, metod + " -> " + url);
 		BufferedWriter out = null;
 		BufferedReader in = null;
 		try {
 			URL endpoint = URI.create(url).toURL();
 			HttpURLConnection conn = (HttpURLConnection) endpoint.openConnection();
-			conn.setDoOutput(true);
+			conn.setDoOutput((body != null && body.trim().length() > 0));
 			conn.setDoInput(true);
-			conn.setRequestMethod("POST");
+			conn.setRequestMethod(metod);
 			for (Entry<String, String> entry : headers.entrySet()) {
 				conn.addRequestProperty(entry.getKey(), entry.getValue());
 			}
 			
-			out = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream(), "utf-8"));
-			out.write(body);
-			out.flush();
-			
-			Log.d(TAG, "response code: " + conn.getResponseCode());
-			if (conn.getResponseCode() >= 400) {
-				in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-			} else {
-				in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			if (body != null && body.trim().length() > 0) {
+				out = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream(), "utf-8"));
+				out.write(body);
+				out.flush();
 			}
+			
+			resp.code = conn.getResponseCode();
+			Log.d(TAG, "response code: " + resp.code);
 			StringBuilder builder = new StringBuilder();
-			String line = null;
-			while( (line = in.readLine()) != null) {
-				builder.append(line);
+			if (resp.code >= 400) {
+				in = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
+			} else {
+				in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
 			}
 			
-			Log.d(TAG, "response: " + builder.toString());
-			return builder.toString();
+			int read;
+			while ((read = in.read()) != -1) {
+				builder.append((char) read);
+			}
+			
+			resp.data = builder.toString();
+			Log.d(TAG, "response: " + resp.data);
+			return resp;
 		} finally {
 			try {
 				if (out != null) out.close();
@@ -60,5 +75,10 @@ public class Http {
 			} catch (IOException e) {
 			}
 		}
+	}
+	
+	public static class Response {
+		public int code;
+		public String data;
 	}
 }
