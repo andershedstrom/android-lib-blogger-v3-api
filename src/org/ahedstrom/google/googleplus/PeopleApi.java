@@ -10,8 +10,8 @@ import android.util.Log;
 public class PeopleApi extends GooglePlusApi {
 	private static final String TAG = "PeopleApi";
 
-	public PeopleApi(OAuth oauth) {
-		super(oauth);
+	public PeopleApi(String appName, OAuth oauth) {
+		super(appName, oauth);
 	}
 	
 	public void get(final ApiCallback<People> callback) {

@@ -15,8 +15,8 @@ import android.util.Log;
 public class BlogsApi extends BloggerApi {
 	private static final String TAG = "BlogsApi";
 
-	public BlogsApi(OAuth oauth) {
-		super(oauth);
+	public BlogsApi(String appName, OAuth oauth) {
+		super(appName, oauth);
 	}
 
 	public void list(final ApiCallback<List<Blogs>> callback) {

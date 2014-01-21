@@ -6,8 +6,8 @@ import org.ahedstrom.google.auth.OAuth;
 
 abstract class GooglePlusApi extends Api {
 
-	protected GooglePlusApi(OAuth oauth) {
-		super("https://www.googleapis.com/plus/v1", oauth);
+	protected GooglePlusApi(String appName, OAuth oauth) {
+		super("https://www.googleapis.com/plus/v1", oauth, appName);
 	}
 
 }

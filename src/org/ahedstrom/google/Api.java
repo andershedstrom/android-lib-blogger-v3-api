@@ -1,22 +1,22 @@
 package org.ahedstrom.google;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.ahedstrom.google.auth.OAuth;
 import org.ahedstrom.google.bloggerapi.v3.Posts;
+import org.ahedstrom.http.Http;
 import org.apache.http.Header;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
 
 public abstract class Api {
 	private static final String TAG = "Api";
@@ -30,10 +30,12 @@ public abstract class Api {
 	private final static AsyncHttpClient client = new AsyncHttpClient();
 	
 	private final OAuth oauth;
+	private final String appName;
 	
-	protected Api(String baseUrl, OAuth oauth) {
+	protected Api(String baseUrl, OAuth oauth, String appName) {
 		this.baseUrl = baseUrl;
 		this.oauth = oauth;
+		this.appName = appName;
 	}
 
 	protected void invokeGet(final String path, final Callback callback) {
@@ -59,55 +61,87 @@ public abstract class Api {
 		});
 	}
 	
-	protected void invokePost(Context ctx, final String path, Posts entry, final Callback callback) {
+	protected void invokePost(final String path, final Posts entry, final Callback callback) {
+		final String url = String.format("%s%s", baseUrl, path);
+		Log.d(TAG, "url: " + url);
+		
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					Map<String, String> headers = new HashMap<String, String>();
+					headers.put("Authorization", "Bearer " + oauth.getAccessToken());
+					headers.put("User-Agent", appName);
+					headers.put("Content-Type", "application/json");
+					
+					String resp = Http.post(url, headers, entry.toString());
+					JSONObject r = new JSONObject(resp.toString());
+					if (r.optJSONObject("error") == null) {
+						callback.onSuccess(r);
+					} else {
+						if (401 == r.getJSONObject("error").getInt("code")) {
+							renewOAuthToken(path, entry, callback);
+						} else {
+							callback.onFailure();
+						}
+					}
+				} catch (MalformedURLException e) {
+					Log.e(TAG, e.getMessage(), e);
+					callback.onFailure();
+				} catch (IOException e) {
+					Log.e(TAG, e.getMessage(), e);
+					callback.onFailure();
+				} catch (JSONException e) {
+					Log.e(TAG, e.getMessage(), e);
+					callback.onFailure();
+				} 
+			}
+		}.start();
+	}
+
+	protected void renewOAuthToken(String path, Posts entry, Callback callback) {
 		try {
-			String url = buildUrl(path);
-			client.post(ctx,
-					url,
-					new Header[]{new BasicHeader("Authorization", "Bearer " + oauth.getAccessToken())},
-					new StringEntity(entry.toString(), "utf-8"),
-					"application/json",
-					new ResponseHander(callback){
-						@Override
-						public void onSuccess(JSONObject blogs) {
-							callback.onSuccess(blogs);
-						}
-						@Override
-						public void onFailure(Throwable arg0, JSONObject error) {
-							try {
-								if (401 == error.getJSONObject("error").getInt("code")) {
-									renewOAuthToken(path, callback);
-								} else {
-									callback.onFailure();
-								}
-							} catch (JSONException e) {
-								callback.onFailure();
-							}
-						}
-					});
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+			doRenewOAuthToken();
+			invokePost(path, entry, callback);
+		} catch (MalformedURLException e) {
+			Log.e(TAG, e.getMessage(), e);
+			callback.onFailure();
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage(), e);
+			callback.onFailure();
+		} catch (JSONException e) {
+			Log.e(TAG, e.getMessage(), e);
+			callback.onFailure();
 		}
 	}
 
-	private void renewOAuthToken(final String path, final Callback callback) {
-		RequestParams params = new RequestParams();
-		params.put("refresh_token", oauth.getRefreshToken());
-		params.put("client_id", oauth.getClientId());
-		params.put("grant_type", "refresh_token");
+	private void doRenewOAuthToken() throws MalformedURLException, IOException, JSONException {
+		Map<String, String> headers = new HashMap<String, String>();
+		headers.put("Content-Type", "application/x-www-form-urlencoded");
 		
-		client.post("https://accounts.google.com/o/oauth2/token", params, new ResponseHander(callback) {
-			@Override
-			public void onSuccess(JSONObject json) {
-				try {
-					String renewedAccessToken = json.getString("access_token");
-					oauth.onAccessTokenExpired(renewedAccessToken);
-					invokeGet(path, callback);
-				} catch (JSONException e) {
-					callback.onFailure();
-				}
-			}
-		});
+		String body = String.format("refresh_token=%s&client_id=%s&grant_type=refresh_token", 
+				oauth.getRefreshToken(),
+				oauth.getClientId());
+		String resp = Http.post("https://accounts.google.com/o/oauth2/token", headers, body);
+		JSONObject json = new JSONObject(resp);
+		String renewedAccessToken = json.getString("access_token");
+		oauth.onAccessTokenExpired(renewedAccessToken);
+	}
+	
+	private void renewOAuthToken(final String path, final Callback callback) {
+		try {
+			doRenewOAuthToken();
+			invokeGet(path, callback);
+		} catch (MalformedURLException e) {
+			Log.e(TAG, e.getMessage(), e);
+			callback.onFailure();
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage(), e);
+			callback.onFailure();
+		} catch (JSONException e) {
+			Log.e(TAG, e.getMessage(), e);
+			callback.onFailure();
+		}
 	}
 	
 	private String buildUrl(String path) {
