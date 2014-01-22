@@ -17,11 +17,6 @@ import android.util.Log;
 public abstract class Api {
 	private static final String TAG = "Api";
 	
-	public interface Callback<T> {
-		void onSuccess(T response);
-		void onFailure();
-	}
-	
 	private final String baseUrl; 
 	
 	private final OAuth oauth;
@@ -33,105 +28,54 @@ public abstract class Api {
 		this.appName = appName;
 	}
 
-	protected void invokeGetString(final String path, final Callback<String> callback) {
+	protected String invokeGet(final String path) {
 		final String url = buildUrl(path);
 		Log.d(TAG, "url: " + url);
-		new Thread(){
-			@Override
-			public void run() {
-				try {
-					Response r = Http.get(url);
-					if (r.code >= 400) {
-						doRenewOAuthToken();
-						invokeGetString(path, callback);
-					} else {
-						callback.onSuccess(r.data);
-					}
-				} catch (MalformedURLException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				} catch (IOException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				} catch (JSONException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				}
+		try {
+			Response r = Http.get(url);
+			if (r.code >= 400) {
+				doRenewOAuthToken();
+				return invokeGet(path);
 			}
-		}.start();
+			return r.data;
+		} catch (MalformedURLException e) {
+			Log.e(TAG, e.getMessage(), e);
+			throw new ApiException(e);
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage(), e);
+			throw new ApiException(e);
+		} catch (JSONException e) {
+			Log.e(TAG, e.getMessage(), e);
+			throw new ApiException(e);
+		}
 	}
 	
-	protected void invokeGet(final String path, final Callback<JSONObject> callback) {
-		final String url = buildUrl(path);
-		Log.d(TAG, "url: " + url);
-		
-		new Thread(){
-			@Override
-			public void run() {
-				try {
-					String resp = Http.get(url).data;
-					JSONObject r = new JSONObject(resp.toString());
-					if (r.optJSONObject("error") == null) {
-						callback.onSuccess(r);
-					} else {
-						if (401 == r.getJSONObject("error").getInt("code")) {
-							doRenewOAuthToken();
-							invokeGet(path, callback);
-						} else {
-							callback.onFailure();
-						}
-					}
-				} catch (MalformedURLException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				} catch (IOException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				} catch (JSONException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				}
-			}
-		}.start();
-	}
-	
-	protected void invokePost(final String path, final Posts entry, final Callback<JSONObject> callback) {
+	protected String invokePost(final String path, final Posts entry) {
 		final String url = String.format("%s%s", baseUrl, path);
 		Log.d(TAG, "url: " + url);
 		
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					Map<String, String> headers = new HashMap<String, String>();
-					headers.put("Authorization", "Bearer " + oauth.getAccessToken());
-					headers.put("User-Agent", appName);
-					headers.put("Content-Type", "application/json");
-					
-					String resp = Http.post(url, headers, entry.toString()).data;
-					JSONObject r = new JSONObject(resp);
-					if (r.optJSONObject("error") == null) {
-						callback.onSuccess(r);
-					} else {
-						if (401 == r.getJSONObject("error").getInt("code")) {
-							doRenewOAuthToken();
-							invokePost(path, entry, callback);
-						} else {
-							callback.onFailure();
-						}
-					}
-				} catch (MalformedURLException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				} catch (IOException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				} catch (JSONException e) {
-					Log.e(TAG, e.getMessage(), e);
-					callback.onFailure();
-				} 
+		try {
+			Map<String, String> headers = new HashMap<String, String>();
+			headers.put("Authorization", "Bearer " + oauth.getAccessToken());
+			headers.put("User-Agent", appName);
+			headers.put("Content-Type", "application/json");
+			
+			Response post = Http.post(url, headers, entry.toString());
+			if (post.code >= 400) {
+				doRenewOAuthToken();
+				return invokePost(path, entry);
 			}
-		}.start();
+			return post.data;
+		} catch (MalformedURLException e) {
+			Log.e(TAG, e.getMessage(), e);
+			throw new ApiException(e);
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage(), e);
+			throw new ApiException(e);
+		} catch (JSONException e) {
+			Log.e(TAG, e.getMessage(), e);
+			throw new ApiException(e);
+		} 
 	}
 
 	private void doRenewOAuthToken() throws MalformedURLException, IOException, JSONException {

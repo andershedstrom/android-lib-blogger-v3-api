@@ -1,6 +1,7 @@
 package org.ahedstrom.google.picasaapi.v2;
 
 import org.ahedstrom.google.ApiCallback;
+import org.ahedstrom.google.ApiException;
 import org.ahedstrom.google.auth.OAuth;
 
 public class AlbumsApi extends PicasaApi {
@@ -10,18 +11,15 @@ public class AlbumsApi extends PicasaApi {
 	}
 	
 	public void list(final ApiCallback<String> callback) {
-		invokeGetString("", new Callback<String>() {
-			
+		new Thread(){
 			@Override
-			public void onSuccess(String response) {
-				callback.onSuccess(response);
+			public void run() {
+				try {
+					callback.onSuccess(invokeGet(""));
+				} catch (ApiException e) {
+					callback.onFailure();
+				}
 			}
-			
-			@Override
-			public void onFailure() {
-				callback.onFailure();
-			}
-		});
+		}.start();
 	}
-
 }

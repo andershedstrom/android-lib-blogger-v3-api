@@ -6,7 +6,6 @@ import java.util.List;
 import org.ahedstrom.google.ApiCallback;
 import org.ahedstrom.google.auth.OAuth;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.util.Log;
@@ -20,12 +19,12 @@ public class BlogsApi extends BloggerApi {
 	}
 
 	public void list(final ApiCallback<List<Blogs>> callback) {
-		Log.d(TAG, "invoking");
-		invokeGet("/users/self/blogs", new Callback<JSONObject>() {
+		new Thread(){
 			@Override
-			public void onSuccess(JSONObject jsonObject) {
-				List<Blogs> lst = new ArrayList<Blogs>();
+			public void run() {
 				try {
+					JSONObject jsonObject = new JSONObject(invokeGet("/users/self/blogs"));
+					List<Blogs> lst = new ArrayList<Blogs>();
 					JSONArray jsonArray = jsonObject.getJSONArray("items");
 					for (int i=0; i<jsonArray.length(); ++i) {
 						JSONObject json = jsonArray.getJSONObject(i);
@@ -33,15 +32,11 @@ public class BlogsApi extends BloggerApi {
 					}
 					Log.d(TAG, lst.size() + " blog(s) fetched");
 					callback.onSuccess(lst);
-				} catch (JSONException e) {
-					onFailure();
+				} catch (Exception e) {
+					callback.onFailure();
 				}
 			}
-			@Override
-			public void onFailure() {
-				callback.onFailure();
-			}
-		});
+		}.start();
 	}
 	
 }

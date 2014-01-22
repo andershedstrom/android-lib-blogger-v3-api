@@ -16,20 +16,18 @@ public class PostsApi extends BloggerApi {
 		insert(entry, false, callback);
 	}
 	
-	public void insert(Posts entry, boolean isDraft, final ApiCallback<Posts> callback) {
-		invokePost(String.format(pathTemplate, entry.getBlogId(), isDraft),
-			entry,
-			new Callback<JSONObject>() {
-				@Override
-				public void onSuccess(JSONObject response) {
-					callback.onSuccess(new Posts(response));
-				}
-				@Override
-				public void onFailure() {
+	public void insert(final Posts entry, final boolean isDraft, final ApiCallback<Posts> callback) {
+		new Thread(){
+			@Override
+			public void run() {
+				try {
+					JSONObject json = new JSONObject(invokePost(String.format(pathTemplate, entry.getBlogId(), isDraft), entry));
+					callback.onSuccess(new Posts(json));
+				} catch (Exception e) {
 					callback.onFailure();
 				}
 			}
-		);
+		}.start();
 	}
 
 }
