@@ -3,7 +3,9 @@ package org.ahedstrom.http;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -20,11 +22,68 @@ public class Http {
 	private static final String TAG = "Http";
 
 	public static Response get(String url)throws MalformedURLException, IOException {
-		return execute("GET", url, Collections.<String, String>emptyMap(), null);
+		return execute("GET", url, Collections.<String, String>emptyMap(), (String)null);
 	}
 
 	public static Response post(String url, Map<String, String> headers, String body) throws MalformedURLException, IOException {
 		return execute("POST", url, headers, body);
+	}
+
+	public static Response post(String url, Map<String, String> headers, InputStream body) throws MalformedURLException, IOException {
+		return execute("POST", url, headers, body);
+	}
+	
+	private static Response execute(String metod, String url, Map<String, String> headers, InputStream body) throws MalformedURLException, IOException {
+		Response resp = new Response();
+		Log.d(TAG, metod + " -> " + url);
+		OutputStream out = null;
+		BufferedReader in = null;
+		try {
+			URL endpoint = URI.create(url).toURL();
+			HttpURLConnection conn = (HttpURLConnection) endpoint.openConnection();
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+			conn.setRequestMethod(metod);
+			for (Entry<String, String> entry : headers.entrySet()) {
+				conn.addRequestProperty(entry.getKey(), entry.getValue());
+			}
+			
+			if (body != null) {
+				out = conn.getOutputStream();
+				byte[] buffer = new byte[4096];
+		        int n = 0;
+		        while (-1 != (n = body.read(buffer))) {
+		            out.write(buffer, 0, n);
+		        }
+			}
+			
+			resp.code = conn.getResponseCode();
+			Log.d(TAG, "response code: " + resp.code);
+			StringBuilder builder = new StringBuilder();
+			if (resp.code >= 400) {
+				in = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
+			} else {
+				in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+			}
+			
+			int read;
+			while ((read = in.read()) != -1) {
+				builder.append((char) read);
+			}
+			
+			resp.data = builder.toString();
+			Log.d(TAG, "response: " + resp.data);
+			return resp;
+		} finally {
+			try {
+				if (out != null) out.close();
+			} catch (IOException e) {
+			}
+			try {
+				if (in != null) in.close();
+			} catch (IOException e) {
+			}
+		}
 	}
 	
 	private static Response execute(String metod, String url, Map<String, String> headers, String body) throws MalformedURLException, IOException {

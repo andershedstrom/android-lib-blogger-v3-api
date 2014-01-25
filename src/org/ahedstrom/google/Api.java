@@ -17,10 +17,10 @@ import android.util.Log;
 public abstract class Api {
 	private static final String TAG = "Api";
 	
-	private final String baseUrl; 
+	protected final String baseUrl; 
 	
-	private final OAuth oauth;
-	private final String appName;
+	protected final OAuth oauth;
+	protected final String appName;
 	
 	protected Api(String baseUrl, OAuth oauth, String appName) {
 		this.baseUrl = baseUrl;
@@ -78,7 +78,7 @@ public abstract class Api {
 		} 
 	}
 
-	private void doRenewOAuthToken() throws MalformedURLException, IOException, JSONException {
+	protected void doRenewOAuthToken() throws MalformedURLException, IOException, JSONException {
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("Content-Type", "application/x-www-form-urlencoded");
 		
@@ -91,7 +91,7 @@ public abstract class Api {
 		oauth.onAccessTokenExpired(renewedAccessToken);
 	}
 	
-	private String buildUrl(String path) {
+	protected String buildUrl(String path) {
 		return String.format("%s%s?access_token=%s",
 				baseUrl,
 				path,
