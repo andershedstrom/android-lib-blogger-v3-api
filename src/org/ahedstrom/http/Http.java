@@ -2,8 +2,8 @@ package org.ahedstrom.http;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -29,11 +29,11 @@ public class Http {
 		return execute("POST", url, headers, body);
 	}
 
-	public static Response post(String url, Map<String, String> headers, InputStream body) throws MalformedURLException, IOException {
+	public static Response post(String url, Map<String, String> headers, ByteArrayOutputStream body) throws MalformedURLException, IOException {
 		return execute("POST", url, headers, body);
 	}
 	
-	private static Response execute(String metod, String url, Map<String, String> headers, InputStream body) throws MalformedURLException, IOException {
+	private static Response execute(String metod, String url, Map<String, String> headers, ByteArrayOutputStream body) throws MalformedURLException, IOException {
 		Response resp = new Response();
 		Log.d(TAG, metod + " -> " + url);
 		OutputStream out = null;
@@ -49,12 +49,9 @@ public class Http {
 			}
 			
 			if (body != null) {
+				byte[] buffer = body.toByteArray();
 				out = conn.getOutputStream();
-				byte[] buffer = new byte[4096];
-		        int n = 0;
-		        while (-1 != (n = body.read(buffer))) {
-		            out.write(buffer, 0, n);
-		        }
+	            out.write(buffer, 0, buffer.length);
 			}
 			
 			resp.code = conn.getResponseCode();
