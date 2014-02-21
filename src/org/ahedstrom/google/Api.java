@@ -9,6 +9,7 @@ import org.ahedstrom.google.auth.OAuth;
 import org.ahedstrom.google.bloggerapi.v3.Posts;
 import org.ahedstrom.http.Http;
 import org.ahedstrom.http.Http.Response;
+import org.ahedstrom.http.QueryParam;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,8 +29,15 @@ public abstract class Api {
 		this.appName = appName;
 	}
 
-	protected String invokeGet(final String path) {
-		final String url = buildUrl(path);
+	protected String invokeGet(final String path, QueryParam ... params) {
+		String url = buildUrl(path);
+		if (params != null && params.length > 0) {
+			StringBuilder buf = new StringBuilder(url);
+			for (QueryParam qp : params) {
+				buf.append("&").append(qp.name).append("=").append(qp.value);
+			}
+			url = buf.toString();
+		}
 		Log.d(TAG, "url: " + url);
 		try {
 			Response r = Http.get(url);
