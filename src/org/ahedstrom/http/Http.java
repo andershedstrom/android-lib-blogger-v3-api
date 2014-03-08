@@ -86,6 +86,7 @@ public class Http {
 	private static Response execute(String metod, String url, Map<String, String> headers, String body) throws MalformedURLException, IOException {
 		Response resp = new Response();
 		Log.d(TAG, metod + " -> " + url);
+		Log.d(TAG, "{body} -> " + body);
 		BufferedWriter out = null;
 		BufferedReader in = null;
 		try {

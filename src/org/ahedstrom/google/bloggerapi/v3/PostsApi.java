@@ -8,8 +8,9 @@ import org.ahedstrom.google.ListResponse;
 import org.ahedstrom.google.auth.OAuth;
 import org.ahedstrom.http.QueryParam;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.util.Log;
 
 public class PostsApi extends BloggerApi {
 
@@ -18,6 +19,10 @@ public class PostsApi extends BloggerApi {
 	
 	public PostsApi(String appName, OAuth oauth) {
 		super(appName, oauth);
+	}
+	
+	public void delete(Posts post, final ApiCallback<Boolean> callback) {
+		// TODO: implement me
 	}
 	
 	public void insert(Posts entry, final ApiCallback<Posts> callback) {
@@ -47,7 +52,11 @@ public class PostsApi extends BloggerApi {
 					if (nextPageToken != null) {
 						qp = new QueryParam("pageToken", nextPageToken);
 					}
-					JSONObject json = new JSONObject(invokeGet(String.format(listPathTemplate, blogId), qp));
+					JSONObject json = new JSONObject(invokeGet(String.format(listPathTemplate, blogId), 
+							new QueryParam("status", "live"),
+							new QueryParam("status", "draft"),
+							new QueryParam("view", "admin"), 
+							qp));
 					ArrayList<Posts> lst = new ArrayList<Posts>();
 					ListResponse<List<Posts>> r = new ListResponse<List<Posts>>(lst, json.optString("nextPageToken"));
 					JSONArray items = json.getJSONArray("items");
@@ -55,7 +64,8 @@ public class PostsApi extends BloggerApi {
 						lst.add(new Posts(items.getJSONObject(i)));
 					}
 					callback.onSuccess(r);
-				} catch (JSONException e) {
+				} catch (Exception ex) {
+					Log.e("PostsApi", ex.getMessage(), ex);
 					callback.onFailure();
 				}
 			}

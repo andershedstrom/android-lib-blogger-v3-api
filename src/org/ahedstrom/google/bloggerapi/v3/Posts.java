@@ -15,6 +15,14 @@ public class Posts extends Base {
 		super(json);
 	}
 
+	public boolean isDraft() {
+		return "DRAFT".equalsIgnoreCase(optString("status"));
+	}
+	
+	public String getTitle() {
+		return optString("title");
+	}
+	
 	public int getTotalItems() {
 		return getInt("totalItems");
 	}

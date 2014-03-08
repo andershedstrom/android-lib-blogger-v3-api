@@ -34,7 +34,9 @@ public abstract class Api {
 		if (params != null && params.length > 0) {
 			StringBuilder buf = new StringBuilder(url);
 			for (QueryParam qp : params) {
-				buf.append("&").append(qp.name).append("=").append(qp.value);
+				if (qp != null) {
+					buf.append("&").append(qp.name).append("=").append(qp.value);
+				}
 			}
 			url = buf.toString();
 		}
@@ -43,7 +45,7 @@ public abstract class Api {
 			Response r = Http.get(url);
 			if (r.code >= 400) {
 				doRenewOAuthToken();
-				return invokeGet(path);
+				return invokeGet(path, params);
 			}
 			return r.data;
 		} catch (MalformedURLException e) {
